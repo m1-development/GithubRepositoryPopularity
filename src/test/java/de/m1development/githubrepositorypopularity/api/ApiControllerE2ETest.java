@@ -6,6 +6,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
+import java.util.LinkedHashMap;
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -46,8 +49,13 @@ class ApiControllerE2ETest {
                 .statusCode(200)
                 .extract().response();
 
-        assertEquals("testvalue", response.jsonPath().getString("queryString"));
-        assertEquals("2025-08-30", response.jsonPath().getString("earliestDate"));
-        assertEquals("Java", response.jsonPath().getString("programmingLanguage"));
+        assertEquals("testvalue", response.jsonPath().getString("query"));
+        assertEquals("2025-08-30", response.jsonPath().getString("earliest_date"));
+        assertEquals("Java", response.jsonPath().getString("programming_language"));
+
+        List<LinkedHashMap> matchingRepositories = response.jsonPath().getList("matching_repositories");
+
+        assertEquals(1, matchingRepositories.size());
+        assertEquals(1234, matchingRepositories.getFirst().get("id"));
     }
 }

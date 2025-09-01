@@ -1,5 +1,8 @@
 package de.m1development.githubrepositorypopularity.api;
 
+import de.m1development.githubrepositorypopularity.model.GithubRepositoryPopularity;
+import de.m1development.githubrepositorypopularity.service.GithubRepositoryPopularityCalculatorService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,10 +12,18 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
 public class ApiController {
+
+    private final GithubRepositoryPopularityCalculatorService calculatorService;
+
+    @Autowired
+    public ApiController(GithubRepositoryPopularityCalculatorService calculatorService) {
+        this.calculatorService = calculatorService;
+    }
 
     @GetMapping("/")
     public ResponseEntity<String> home() {
@@ -34,10 +45,13 @@ public class ApiController {
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate earliestDate,
             @RequestParam(required = false) String programmingLanguage
     ) {
+        List<GithubRepositoryPopularity> repositories = calculatorService.calculatePopularityForRepositories(queryString, earliestDate, programmingLanguage);
+
         Map<String, Object> response = new HashMap<>();
-        response.put("queryString", queryString);
-        response.put("earliestDate", earliestDate);
-        response.put("programmingLanguage", programmingLanguage);
+        response.put("query", queryString);
+        response.put("earliest_date", earliestDate);
+        response.put("programming_language", programmingLanguage);
+        response.put("matching_repositories", repositories);
         return ResponseEntity.ok(response);
     }
 }
