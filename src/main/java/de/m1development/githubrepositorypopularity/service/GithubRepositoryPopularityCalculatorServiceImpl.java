@@ -19,17 +19,6 @@ public class GithubRepositoryPopularityCalculatorServiceImpl implements GithubRe
         this.githubRepositoryResolver = githubRepositoryResolver;
     }
 
-    /**
-     * This method will resolve the matching repositories from the github api and calculates
-     * a popularity score for each repository based on the stargazers count, the forks count
-     * and the recency of updates.
-     *
-     * @param queryString           Best match query string for repositories on github
-     * @param earliestDate          Optional filter to get repositories created on this date
-     * @param programmingLanguage   Optional filter to get repositories using the specified programming language
-     *
-     * @return List of GithubRepositoryPopularity
-     */
     @Override
     public List<GithubRepositoryItem> calculatePopularityForRepositories(
             @NonNull String queryString,
