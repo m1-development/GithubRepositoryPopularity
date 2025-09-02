@@ -11,11 +11,12 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.*;
 
 class GithubRepositoryResolverImplTest {
 
@@ -27,34 +28,108 @@ class GithubRepositoryResolverImplTest {
     }
 
     @Test
-    void resolveMatchingGithubRepositories() throws IOException, InterruptedException {
+    void resolveMatchingGithubRepositories_withEmptyGithubRepositoryResponse_ShouldReturnAnEmptyList() throws IOException, InterruptedException {
         // given
         String queryString = "test";
         LocalDate earliestDate = LocalDate.of(2024,1,1);
         String programmingLanguage = "python";
 
-        GithubRepositorySearchResponse testResponse = buildTestResponse();
-        doReturn(testResponse).when(sut).sendHttpRequestAndParseResponse(queryString, earliestDate, programmingLanguage, 1);
+        int totalResultCount = 150;
+        GithubRepositorySearchResponse responsePage1 = buildPageResponse("namePage1", totalResultCount);
+        GithubRepositorySearchResponse responsePage2 = buildPageResponse("namePage2", totalResultCount);
+
+        doReturn(responsePage1).when(sut).sendHttpRequestAndParseResponse(queryString, earliestDate, programmingLanguage, 1);
+        doReturn(responsePage2).when(sut).sendHttpRequestAndParseResponse(queryString, earliestDate, programmingLanguage, 2);
 
         // when
         List<GithubRepositoryItem> response = sut.resolveMatchingGithubRepositories(queryString, earliestDate, programmingLanguage);
 
         // then
+        verify(sut).sendHttpRequestAndParseResponse(queryString, earliestDate, programmingLanguage, 1);
+        verify(sut).sendHttpRequestAndParseResponse(queryString, earliestDate, programmingLanguage, 2);
+        verify(sut, never()).sendHttpRequestAndParseResponse(queryString, earliestDate, programmingLanguage, 3);
         assertNotNull(response);
-        assertEquals(0, response.size());
-    }
-
-    private GithubRepositorySearchResponse buildTestResponse() {
-
-        GithubRepositorySearchResponse response = new GithubRepositorySearchResponse();
-        response.setTotalCount(0);
-        response.setItems(List.of());
-
-        return response;
+        assertEquals(2, response.size());
     }
 
     @Test
-    void buildHttpRequest_commonRequestValues() {
+    void resolveMatchingGithubRepositories_withMoreThan100Results_ShouldReturnConcatenatedResultsFrom2Pages() throws IOException, InterruptedException {
+        // given
+        String queryString = "test";
+        LocalDate earliestDate = LocalDate.of(2024,1,1);
+        String programmingLanguage = "python";
+
+        int totalResultCount = 150;
+        GithubRepositorySearchResponse responsePage1 = buildPageResponse("namePage1", totalResultCount);
+        GithubRepositorySearchResponse responsePage2 = buildPageResponse("namePage2", totalResultCount);
+
+        doReturn(responsePage1).when(sut).sendHttpRequestAndParseResponse(queryString, earliestDate, programmingLanguage, 1);
+        doReturn(responsePage2).when(sut).sendHttpRequestAndParseResponse(queryString, earliestDate, programmingLanguage, 2);
+
+        // when
+        List<GithubRepositoryItem> response = sut.resolveMatchingGithubRepositories(queryString, earliestDate, programmingLanguage);
+
+        // then
+        verify(sut).sendHttpRequestAndParseResponse(queryString, earliestDate, programmingLanguage, 1);
+        verify(sut).sendHttpRequestAndParseResponse(queryString, earliestDate, programmingLanguage, 2);
+        verify(sut, never()).sendHttpRequestAndParseResponse(queryString, earliestDate, programmingLanguage, 3);
+        assertNotNull(response);
+        assertEquals(2, response.size());
+    }
+
+    @Test
+    void resolveMatchingGithubRepositories_withMoreThan500Results_ShouldReturnConcatenatedResultsLimitedTo5Pages() throws IOException, InterruptedException {
+        // given
+        String queryString = "test";
+        LocalDate earliestDate = LocalDate.of(2024,1,1);
+        String programmingLanguage = "python";
+
+        int totalResultCount = 765;
+        GithubRepositorySearchResponse responsePage1 = buildPageResponse("namePage1", totalResultCount);
+        GithubRepositorySearchResponse responsePage2 = buildPageResponse("namePage2", totalResultCount);
+        GithubRepositorySearchResponse responsePage3 = buildPageResponse("namePage3", totalResultCount);
+        GithubRepositorySearchResponse responsePage4 = buildPageResponse("namePage4", totalResultCount);
+        GithubRepositorySearchResponse responsePage5 = buildPageResponse("namePage5", totalResultCount);
+
+        doReturn(responsePage1).when(sut).sendHttpRequestAndParseResponse(queryString, earliestDate, programmingLanguage, 1);
+        doReturn(responsePage2).when(sut).sendHttpRequestAndParseResponse(queryString, earliestDate, programmingLanguage, 2);
+        doReturn(responsePage3).when(sut).sendHttpRequestAndParseResponse(queryString, earliestDate, programmingLanguage, 3);
+        doReturn(responsePage4).when(sut).sendHttpRequestAndParseResponse(queryString, earliestDate, programmingLanguage, 4);
+        doReturn(responsePage5).when(sut).sendHttpRequestAndParseResponse(queryString, earliestDate, programmingLanguage, 5);
+
+        // when
+        List<GithubRepositoryItem> response = sut.resolveMatchingGithubRepositories(queryString, earliestDate, programmingLanguage);
+
+        // then
+        verify(sut).sendHttpRequestAndParseResponse(queryString, earliestDate, programmingLanguage, 1);
+        verify(sut).sendHttpRequestAndParseResponse(queryString, earliestDate, programmingLanguage, 2);
+        verify(sut).sendHttpRequestAndParseResponse(queryString, earliestDate, programmingLanguage, 3);
+        verify(sut).sendHttpRequestAndParseResponse(queryString, earliestDate, programmingLanguage, 4);
+        verify(sut).sendHttpRequestAndParseResponse(queryString, earliestDate, programmingLanguage, 5);
+        verify(sut, never()).sendHttpRequestAndParseResponse(queryString, earliestDate, programmingLanguage, 6);
+        assertNotNull(response);
+        assertEquals(5, response.size());
+    }
+
+    private GithubRepositorySearchResponse buildPageResponse(String pageName, int totalCount) {
+        GithubRepositorySearchResponse responsePage1 = new GithubRepositorySearchResponse();
+        responsePage1.setTotalCount(totalCount);
+        responsePage1.setItems(buildTestItems(pageName));
+        return responsePage1;
+    }
+
+    private List<GithubRepositoryItem> buildTestItems(String name) {
+        GithubRepositoryItem item = new GithubRepositoryItem();
+        item.setName(name);
+
+        List<GithubRepositoryItem> items = new ArrayList<>();
+        items.add(item);
+
+        return items;
+    }
+
+    @Test
+    void buildHttpRequest_withCommonRequestValues_ShuldReturnAValidHttpRequest() {
         // given
         String queryString = "test";
         LocalDate earliestDate = null;
@@ -80,7 +155,7 @@ class GithubRepositoryResolverImplTest {
     }
 
     @Test
-    void buildHttpRequest_URIonlyWithQueryString() {
+    void buildHttpRequest_OnlyWithQueryString_ShouldCreateAValidGithubURIWithinHttpRequest() {
         // given
         String queryString = "test";
         LocalDate earliestDate = null;
@@ -98,7 +173,7 @@ class GithubRepositoryResolverImplTest {
     }
 
     @Test
-    void buildHttpRequest_URIWithQueryStringAndEarliestDate() {
+    void buildHttpRequest_WithQueryStringAndEarliestDate_ShouldCreateAValidGithubURIWithinHttpRequest() {
         // given
         String queryString = "test";
         LocalDate earliestDate = LocalDate.of(2024,1,1);
@@ -116,7 +191,7 @@ class GithubRepositoryResolverImplTest {
     }
 
     @Test
-    void buildHttpRequest_URIWithQueryStringAndProgrammingLanguage() {
+    void buildHttpRequest_WithQueryStringAndProgrammingLanguage_ShouldCreateAValidGithubURIWithinHttpRequest() {
         // given
         String queryString = "test";
         LocalDate earliestDate = null;
@@ -134,7 +209,7 @@ class GithubRepositoryResolverImplTest {
     }
 
     @Test
-    void buildHttpRequest_URIWithQueryStringAndEarliestDateAndProgrammingLanguage() {
+    void buildHttpRequest_WithQueryStringAndEarliestDateAndProgrammingLanguage_ShouldCreateAValidGithubURIWithinHttpRequest() {
         // given
         String queryString = "test";
         LocalDate earliestDate = LocalDate.of(2024,1,1);
@@ -152,7 +227,7 @@ class GithubRepositoryResolverImplTest {
     }
 
     @Test
-    void buildHttpRequest_MissingQuerySring() {
+    void buildHttpRequest_MissingQueryString_ShouldThrowException() {
         // given
         String queryString = null;
         LocalDate earliestDate = null;
@@ -168,7 +243,7 @@ class GithubRepositoryResolverImplTest {
     }
 
     @Test
-    void parseJsonResponse_EmptyResponse() throws JsonProcessingException {
+    void parseJsonResponse_WithEmptyJsonResponse_ShouldFillGithubRepositorySearchResponseCorrectly() throws JsonProcessingException {
         // given
         String jsonResponse = "{\"total_count\": 0, \"items\": []}";
 
@@ -182,7 +257,7 @@ class GithubRepositoryResolverImplTest {
     }
 
     @Test
-    void parseJsonResponse_OneItem() throws JsonProcessingException {
+    void parseJsonResponse_WithOneItemResponse_ShouldFillGithubRepositorySearchResponseCorrectly() throws JsonProcessingException {
         // given
         String jsonResponse = "{" +
                 "\"total_count\": 1, " +
