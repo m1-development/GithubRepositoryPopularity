@@ -1,7 +1,9 @@
 package de.m1development.githubrepositorypopularity.service;
 
 import de.m1development.githubrepositorypopularity.model.GithubRepositoryPopularity;
+import de.m1development.githubrepositorypopularity.util.net.GithubRepositoryResolver;
 import lombok.NonNull;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -9,6 +11,13 @@ import java.util.List;
 
 @Service
 public class GithubRepositoryPopularityCalculatorServiceImpl implements GithubRepositoryPopularityCalculatorService {
+
+    private final GithubRepositoryResolver githubRepositoryResolver;
+
+    @Autowired
+    public GithubRepositoryPopularityCalculatorServiceImpl(GithubRepositoryResolver githubRepositoryResolver) {
+        this.githubRepositoryResolver = githubRepositoryResolver;
+    }
 
     /**
      * This method will resolve the matching repositories from the github api and calculates
@@ -27,17 +36,10 @@ public class GithubRepositoryPopularityCalculatorServiceImpl implements GithubRe
             LocalDate earliestDate,
             String programmingLanguage) {
 
-        GithubRepositoryPopularity test =  new GithubRepositoryPopularity();
-        test.setId(1234);
-        test.setName("RepoName");
-        test.setHtmlUrl("https://github.com/RepoName/example");
-        test.setLanguage("Java");
-        test.setForksCount(50);
-        test.setStargazersCount(333);
-        test.setUpdatedAt(LocalDate.now());
+        List<GithubRepositoryPopularity> repositories = githubRepositoryResolver.resolveMatchingGithubRepositories(queryString, earliestDate, programmingLanguage);
 
-        test.setCalculatedPopularityScore(200000);
+        // TODO: Implement popularity score algorithm
 
-        return List.of(test);
+        return repositories;
     }
 }

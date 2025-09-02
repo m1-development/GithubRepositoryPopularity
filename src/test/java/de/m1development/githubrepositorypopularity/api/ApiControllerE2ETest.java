@@ -55,7 +55,6 @@ class ApiControllerE2ETest {
 
         List<LinkedHashMap> matchingRepositories = response.jsonPath().getList("matching_repositories");
 
-        assertEquals(1, matchingRepositories.size());
-        assertEquals(1234, matchingRepositories.getFirst().get("id"));
+        assertEquals(0, matchingRepositories.size());
     }
 }
