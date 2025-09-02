@@ -18,6 +18,7 @@ import java.net.http.HttpResponse;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import static java.net.http.HttpResponse.BodyHandlers.ofString;
 
@@ -29,7 +30,7 @@ public class GithubRepositoryResolverImpl implements GithubRepositoryResolver {
     public static final int RESULT_LIMIT = 500;
 
     @Override
-    public List<GithubRepositoryItem> resolveMatchingGithubRepositories(
+    public List<GithubRepositoryItem> resolveMatchingGithubRepositoriesSequential(
             @NonNull String queryString,
             LocalDate earliestDate,
             String programmingLanguage) {
@@ -60,6 +61,67 @@ public class GithubRepositoryResolverImpl implements GithubRepositoryResolver {
         }
 
         return collectedGithubRepositoryItems;
+    }
+
+    @Override
+    public List<GithubRepositoryItem> resolveMatchingGithubRepositoriesParallel(
+            @NonNull String queryString,
+            LocalDate earliestDate,
+            String programmingLanguage) {
+
+        List<GithubRepositoryItem> collectedGithubRepositoryItems;
+
+        try {
+            GithubRepositorySearchResponse initialGithubRepositorySearchResponse =
+                    sendHttpRequestAndParseResponse(queryString, earliestDate, programmingLanguage, 1);
+
+            collectedGithubRepositoryItems = new ArrayList<>(initialGithubRepositorySearchResponse.getItems());
+
+            int totalCount =  initialGithubRepositorySearchResponse.getTotalCount() > RESULT_LIMIT ?
+                    RESULT_LIMIT : initialGithubRepositorySearchResponse.getTotalCount();
+
+            int totalNumberOfPages = totalCount / PAGE_SIZE + (totalCount % PAGE_SIZE == 0 ? 0 : 1);
+
+            if (totalNumberOfPages > 1) {
+                List<GithubRepositoryItem> githubRepositoryItemsFromParallel =
+                        resolveMissingRepositoriesInParallel(queryString, earliestDate, programmingLanguage, totalNumberOfPages);
+                collectedGithubRepositoryItems.addAll(githubRepositoryItemsFromParallel);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        return collectedGithubRepositoryItems;
+    }
+
+    List<GithubRepositoryItem> resolveMissingRepositoriesInParallel(
+            String queryString,
+            LocalDate earliestDate,
+            String programmingLanguage,
+            int totalNumberOfPages) throws JsonProcessingException {
+
+        try (HttpClient client = HttpClient.newHttpClient()) {
+            // Resolve all missing pages in parallel
+            List<HttpRequest> parallelRequests  = new ArrayList<>();
+            for (int pageNumber = 2; pageNumber <= totalNumberOfPages; pageNumber++) {
+                parallelRequests.add(buildHttpRequest(queryString, earliestDate, programmingLanguage, pageNumber));
+            }
+
+            List<CompletableFuture<String>> futures = parallelRequests.stream()
+                    .map(request -> client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                            .thenApply(HttpResponse::body))
+                    .toList();
+
+            List<GithubRepositoryItem>  collectedGithubRepositoryItemsFromParallel = new ArrayList<>();
+            List<String> jsonResponses = futures.stream().map(CompletableFuture::join).toList();
+            for (String jsonResponse : jsonResponses) {
+                GithubRepositorySearchResponse githubRepositorySearchResponse = parseJsonResponse(jsonResponse);
+                collectedGithubRepositoryItemsFromParallel.addAll(githubRepositorySearchResponse.getItems());
+            }
+            return collectedGithubRepositoryItemsFromParallel;
+        }
     }
 
     GithubRepositorySearchResponse sendHttpRequestAndParseResponse(

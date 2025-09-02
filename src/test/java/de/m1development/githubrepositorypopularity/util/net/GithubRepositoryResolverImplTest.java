@@ -28,7 +28,120 @@ class GithubRepositoryResolverImplTest {
     }
 
     @Test
-    void resolveMatchingGithubRepositories_withEmptyGithubRepositoryResponse_ShouldReturnAnEmptyList() throws IOException, InterruptedException {
+    void resolveMatchingGithubRepositoriesParallel_withEmptyGithubRepositoryResponse_ShouldReturnAnEmptyListSequential() throws IOException, InterruptedException {
+        // given
+        String queryString = "test";
+        LocalDate earliestDate = LocalDate.of(2024,1,1);
+        String programmingLanguage = "python";
+
+        GithubRepositorySearchResponse responsePage1 = new GithubRepositorySearchResponse();
+        responsePage1.setTotalCount(0);
+        responsePage1.setItems(new ArrayList<>());
+
+        doReturn(responsePage1).when(sut).sendHttpRequestAndParseResponse(queryString, earliestDate, programmingLanguage, 1);
+
+        // when
+        List<GithubRepositoryItem> response = sut.resolveMatchingGithubRepositoriesParallel(queryString, earliestDate, programmingLanguage);
+
+        // then
+        verify(sut).sendHttpRequestAndParseResponse(queryString, earliestDate, programmingLanguage, 1);
+        verify(sut, never()).resolveMissingRepositoriesInParallel(queryString, earliestDate, programmingLanguage, 1);
+        assertNotNull(response);
+        assertEquals(0, response.size());
+    }
+
+    @Test
+    void resolveMatchingGithubRepositoriesParallel_withMoreThan100Results_ShouldReturnConcatenatedResultsFrom2Pages() throws IOException, InterruptedException {
+        // given
+        String queryString = "test";
+        LocalDate earliestDate = LocalDate.of(2024,1,1);
+        String programmingLanguage = "python";
+
+        int totalResultCount = 150;
+        GithubRepositorySearchResponse responsePage1 = buildPageResponse("namePage1", totalResultCount);
+        GithubRepositorySearchResponse responsePage2 = buildPageResponse("namePage2", totalResultCount);
+
+        doReturn(responsePage1).when(sut).sendHttpRequestAndParseResponse(queryString, earliestDate, programmingLanguage, 1);
+
+        List<GithubRepositoryItem> resultList = new ArrayList<>(responsePage2.getItems());
+        doReturn(resultList).when(sut).resolveMissingRepositoriesInParallel(queryString, earliestDate, programmingLanguage, 2);
+
+        // when
+        List<GithubRepositoryItem> response = sut.resolveMatchingGithubRepositoriesParallel(queryString, earliestDate, programmingLanguage);
+
+        // then
+        verify(sut).sendHttpRequestAndParseResponse(queryString, earliestDate, programmingLanguage, 1);
+        verify(sut).resolveMissingRepositoriesInParallel(queryString, earliestDate, programmingLanguage, 2);
+        assertNotNull(response);
+        assertEquals(2, response.size());
+        assertEquals("namePage1", response.get(0).getName());
+        assertEquals("namePage2", response.get(1).getName());
+    }
+
+    @Test
+    void resolveMatchingGithubRepositoriesParallel_withMoreThan500Results_ShouldReturnConcatenatedResultsLimitedTo5Pages() throws IOException, InterruptedException {
+        // given
+        String queryString = "test";
+        LocalDate earliestDate = LocalDate.of(2024,1,1);
+        String programmingLanguage = "python";
+
+        int totalResultCount = 765;
+        GithubRepositorySearchResponse responsePage1 = buildPageResponse("namePage1", totalResultCount);
+        GithubRepositorySearchResponse responsePage2 = buildPageResponse("namePage2", totalResultCount);
+        GithubRepositorySearchResponse responsePage3 = buildPageResponse("namePage3", totalResultCount);
+        GithubRepositorySearchResponse responsePage4 = buildPageResponse("namePage4", totalResultCount);
+        GithubRepositorySearchResponse responsePage5 = buildPageResponse("namePage5", totalResultCount);
+
+        doReturn(responsePage1).when(sut).sendHttpRequestAndParseResponse(queryString, earliestDate, programmingLanguage, 1);
+
+        List<GithubRepositoryItem> resultList = new ArrayList<>();
+        resultList.addAll(responsePage2.getItems());
+        resultList.addAll(responsePage3.getItems());
+        resultList.addAll(responsePage4.getItems());
+        resultList.addAll(responsePage5.getItems());
+        doReturn(resultList).when(sut).resolveMissingRepositoriesInParallel(queryString, earliestDate, programmingLanguage, 5);
+
+        // when
+        List<GithubRepositoryItem> response = sut.resolveMatchingGithubRepositoriesParallel(queryString, earliestDate, programmingLanguage);
+
+        // then
+        verify(sut).sendHttpRequestAndParseResponse(queryString, earliestDate, programmingLanguage, 1);
+        verify(sut).resolveMissingRepositoriesInParallel(queryString, earliestDate, programmingLanguage, 5);
+        assertNotNull(response);
+        assertEquals(5, response.size());
+        assertEquals("namePage1", response.get(0).getName());
+        assertEquals("namePage2", response.get(1).getName());
+        assertEquals("namePage3", response.get(2).getName());
+        assertEquals("namePage4", response.get(3).getName());
+        assertEquals("namePage5", response.get(4).getName());
+    }
+
+
+    @Test
+    void resolveMatchingGithubRepositoriesSequential_withEmptyGithubRepositoryResponse_ShouldReturnAnEmptyListSequential() throws IOException, InterruptedException {
+        // given
+        String queryString = "test";
+        LocalDate earliestDate = LocalDate.of(2024,1,1);
+        String programmingLanguage = "python";
+
+        GithubRepositorySearchResponse responsePage1 = new GithubRepositorySearchResponse();
+        responsePage1.setTotalCount(0);
+        responsePage1.setItems(new ArrayList<>());
+
+        doReturn(responsePage1).when(sut).sendHttpRequestAndParseResponse(queryString, earliestDate, programmingLanguage, 1);
+
+        // when
+        List<GithubRepositoryItem> response = sut.resolveMatchingGithubRepositoriesSequential(queryString, earliestDate, programmingLanguage);
+
+        // then
+        verify(sut).sendHttpRequestAndParseResponse(queryString, earliestDate, programmingLanguage, 1);
+        verify(sut, never()).sendHttpRequestAndParseResponse(queryString, earliestDate, programmingLanguage, 2);
+        assertNotNull(response);
+        assertEquals(0, response.size());
+    }
+
+    @Test
+    void resolveMatchingGithubRepositoriesSequential_withMoreThan100Results_ShouldReturnConcatenatedResultsFrom2Pages() throws IOException, InterruptedException {
         // given
         String queryString = "test";
         LocalDate earliestDate = LocalDate.of(2024,1,1);
@@ -42,7 +155,7 @@ class GithubRepositoryResolverImplTest {
         doReturn(responsePage2).when(sut).sendHttpRequestAndParseResponse(queryString, earliestDate, programmingLanguage, 2);
 
         // when
-        List<GithubRepositoryItem> response = sut.resolveMatchingGithubRepositories(queryString, earliestDate, programmingLanguage);
+        List<GithubRepositoryItem> response = sut.resolveMatchingGithubRepositoriesSequential(queryString, earliestDate, programmingLanguage);
 
         // then
         verify(sut).sendHttpRequestAndParseResponse(queryString, earliestDate, programmingLanguage, 1);
@@ -50,35 +163,12 @@ class GithubRepositoryResolverImplTest {
         verify(sut, never()).sendHttpRequestAndParseResponse(queryString, earliestDate, programmingLanguage, 3);
         assertNotNull(response);
         assertEquals(2, response.size());
+        assertEquals("namePage1", response.get(0).getName());
+        assertEquals("namePage2", response.get(1).getName());
     }
 
     @Test
-    void resolveMatchingGithubRepositories_withMoreThan100Results_ShouldReturnConcatenatedResultsFrom2Pages() throws IOException, InterruptedException {
-        // given
-        String queryString = "test";
-        LocalDate earliestDate = LocalDate.of(2024,1,1);
-        String programmingLanguage = "python";
-
-        int totalResultCount = 150;
-        GithubRepositorySearchResponse responsePage1 = buildPageResponse("namePage1", totalResultCount);
-        GithubRepositorySearchResponse responsePage2 = buildPageResponse("namePage2", totalResultCount);
-
-        doReturn(responsePage1).when(sut).sendHttpRequestAndParseResponse(queryString, earliestDate, programmingLanguage, 1);
-        doReturn(responsePage2).when(sut).sendHttpRequestAndParseResponse(queryString, earliestDate, programmingLanguage, 2);
-
-        // when
-        List<GithubRepositoryItem> response = sut.resolveMatchingGithubRepositories(queryString, earliestDate, programmingLanguage);
-
-        // then
-        verify(sut).sendHttpRequestAndParseResponse(queryString, earliestDate, programmingLanguage, 1);
-        verify(sut).sendHttpRequestAndParseResponse(queryString, earliestDate, programmingLanguage, 2);
-        verify(sut, never()).sendHttpRequestAndParseResponse(queryString, earliestDate, programmingLanguage, 3);
-        assertNotNull(response);
-        assertEquals(2, response.size());
-    }
-
-    @Test
-    void resolveMatchingGithubRepositories_withMoreThan500Results_ShouldReturnConcatenatedResultsLimitedTo5Pages() throws IOException, InterruptedException {
+    void resolveMatchingGithubRepositoriesSequential_withMoreThan500Results_ShouldReturnConcatenatedResultsLimitedTo5Pages() throws IOException, InterruptedException {
         // given
         String queryString = "test";
         LocalDate earliestDate = LocalDate.of(2024,1,1);
@@ -98,7 +188,7 @@ class GithubRepositoryResolverImplTest {
         doReturn(responsePage5).when(sut).sendHttpRequestAndParseResponse(queryString, earliestDate, programmingLanguage, 5);
 
         // when
-        List<GithubRepositoryItem> response = sut.resolveMatchingGithubRepositories(queryString, earliestDate, programmingLanguage);
+        List<GithubRepositoryItem> response = sut.resolveMatchingGithubRepositoriesSequential(queryString, earliestDate, programmingLanguage);
 
         // then
         verify(sut).sendHttpRequestAndParseResponse(queryString, earliestDate, programmingLanguage, 1);
@@ -109,6 +199,11 @@ class GithubRepositoryResolverImplTest {
         verify(sut, never()).sendHttpRequestAndParseResponse(queryString, earliestDate, programmingLanguage, 6);
         assertNotNull(response);
         assertEquals(5, response.size());
+        assertEquals("namePage1", response.get(0).getName());
+        assertEquals("namePage2", response.get(1).getName());
+        assertEquals("namePage3", response.get(2).getName());
+        assertEquals("namePage4", response.get(3).getName());
+        assertEquals("namePage5", response.get(4).getName());
     }
 
     private GithubRepositorySearchResponse buildPageResponse(String pageName, int totalCount) {

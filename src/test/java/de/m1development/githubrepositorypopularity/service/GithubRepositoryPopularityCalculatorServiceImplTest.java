@@ -35,7 +35,7 @@ class GithubRepositoryPopularityCalculatorServiceImplTest {
         String programmingLanguage = "Java";
 
         List<GithubRepositoryItem> githubRepositoryItemList = new ArrayList<>();
-        doReturn(githubRepositoryItemList).when(githubRepositoryResolver).resolveMatchingGithubRepositories(queryString, earliestDate, programmingLanguage);
+        doReturn(githubRepositoryItemList).when(githubRepositoryResolver).resolveMatchingGithubRepositoriesParallel(queryString, earliestDate, programmingLanguage);
 
         // when
         List<GithubRepositoryItem> resultList = sut.calculatePopularityForRepositories(queryString, earliestDate, programmingLanguage);
@@ -61,7 +61,7 @@ class GithubRepositoryPopularityCalculatorServiceImplTest {
         List<GithubRepositoryItem> githubRepositoryItemList = new ArrayList<>();
         githubRepositoryItemList.add(item1);
 
-        doReturn(githubRepositoryItemList).when(githubRepositoryResolver).resolveMatchingGithubRepositories(queryString, earliestDate, programmingLanguage);
+        doReturn(githubRepositoryItemList).when(githubRepositoryResolver).resolveMatchingGithubRepositoriesParallel(queryString, earliestDate, programmingLanguage);
 
         // when
         List<GithubRepositoryItem> resultList = sut.calculatePopularityForRepositories(queryString, earliestDate, programmingLanguage);
@@ -95,7 +95,7 @@ class GithubRepositoryPopularityCalculatorServiceImplTest {
         githubRepositoryItemList.add(item1);
         githubRepositoryItemList.add(item2);
 
-        doReturn(githubRepositoryItemList).when(githubRepositoryResolver).resolveMatchingGithubRepositories(queryString, earliestDate, programmingLanguage);
+        doReturn(githubRepositoryItemList).when(githubRepositoryResolver).resolveMatchingGithubRepositoriesParallel(queryString, earliestDate, programmingLanguage);
 
         // when
         List<GithubRepositoryItem> resultList = sut.calculatePopularityForRepositories(queryString, earliestDate, programmingLanguage);
@@ -132,7 +132,7 @@ class GithubRepositoryPopularityCalculatorServiceImplTest {
         githubRepositoryItemList.add(item1);
         githubRepositoryItemList.add(item2);
 
-        doReturn(githubRepositoryItemList).when(githubRepositoryResolver).resolveMatchingGithubRepositories(queryString, earliestDate, programmingLanguage);
+        doReturn(githubRepositoryItemList).when(githubRepositoryResolver).resolveMatchingGithubRepositoriesParallel(queryString, earliestDate, programmingLanguage);
 
         // when
         List<GithubRepositoryItem> resultList = sut.calculatePopularityForRepositories(queryString, earliestDate, programmingLanguage);
@@ -169,7 +169,7 @@ class GithubRepositoryPopularityCalculatorServiceImplTest {
         githubRepositoryItemList.add(item1);
         githubRepositoryItemList.add(item2);
 
-        doReturn(githubRepositoryItemList).when(githubRepositoryResolver).resolveMatchingGithubRepositories(queryString, earliestDate, programmingLanguage);
+        doReturn(githubRepositoryItemList).when(githubRepositoryResolver).resolveMatchingGithubRepositoriesParallel(queryString, earliestDate, programmingLanguage);
 
         // when
         List<GithubRepositoryItem> resultList = sut.calculatePopularityForRepositories(queryString, earliestDate, programmingLanguage);
@@ -206,7 +206,7 @@ class GithubRepositoryPopularityCalculatorServiceImplTest {
         githubRepositoryItemList.add(item1);
         githubRepositoryItemList.add(item2);
 
-        doReturn(githubRepositoryItemList).when(githubRepositoryResolver).resolveMatchingGithubRepositories(queryString, earliestDate, programmingLanguage);
+        doReturn(githubRepositoryItemList).when(githubRepositoryResolver).resolveMatchingGithubRepositoriesParallel(queryString, earliestDate, programmingLanguage);
 
         // when
         List<GithubRepositoryItem> resultList = sut.calculatePopularityForRepositories(queryString, earliestDate, programmingLanguage);

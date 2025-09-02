@@ -24,7 +24,7 @@ public class GithubRepositoryPopularityCalculatorServiceImpl implements GithubRe
             LocalDate earliestDate,
             String programmingLanguage) {
 
-        List<GithubRepositoryItem> repositories = githubRepositoryResolver.resolveMatchingGithubRepositories(
+        List<GithubRepositoryItem> repositories = githubRepositoryResolver.resolveMatchingGithubRepositoriesParallel(
                 queryString, earliestDate, programmingLanguage);
         repositories.forEach(GithubRepositoryItem::calculatePopularityScore);
         repositories.sort((a, b) -> Double.compare(b.getPopularityScore(), a.getPopularityScore()));
