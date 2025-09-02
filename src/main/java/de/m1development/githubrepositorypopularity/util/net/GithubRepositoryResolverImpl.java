@@ -16,6 +16,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 import static java.net.http.HttpResponse.BodyHandlers.ofString;
@@ -25,6 +26,7 @@ public class GithubRepositoryResolverImpl implements GithubRepositoryResolver {
 
     public static final String GITHUB_HOST = "api.github.com";
     public static final int PAGE_SIZE = 100;
+    public static final int RESULT_LIMIT = 500;
 
     @Override
     public List<GithubRepositoryItem> resolveMatchingGithubRepositories(
@@ -32,23 +34,39 @@ public class GithubRepositoryResolverImpl implements GithubRepositoryResolver {
             LocalDate earliestDate,
             String programmingLanguage) {
 
-        GithubRepositorySearchResponse parsedResponse;
+        List<GithubRepositoryItem> collectedGithubRepositoryItems = new ArrayList<>();
+        int currentPage = 1;
+        boolean searchIsComplete;
+
         try {
-            parsedResponse = sendHttpRequestAndParseResponse(queryString, earliestDate, programmingLanguage, 1);
+            do {
+                GithubRepositorySearchResponse githubRepositorySearchResponse =
+                        sendHttpRequestAndParseResponse(queryString, earliestDate, programmingLanguage, currentPage);
+
+                collectedGithubRepositoryItems.addAll(githubRepositorySearchResponse.getItems());
+
+                int totalSearchCount = githubRepositorySearchResponse.getTotalCount() > RESULT_LIMIT ?
+                        RESULT_LIMIT : githubRepositorySearchResponse.getTotalCount();
+
+                searchIsComplete = totalSearchCount <= currentPage * PAGE_SIZE;
+                currentPage++;
+
+            } while (!searchIsComplete);
+
         } catch (IOException e) {
             throw new RuntimeException(e);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
 
-        return parsedResponse.getItems();
+        return collectedGithubRepositoryItems;
     }
 
-     GithubRepositorySearchResponse sendHttpRequestAndParseResponse(
-             String queryString,
-             LocalDate earliestDate,
-             String programmingLanguage,
-             Integer page) throws IOException, InterruptedException {
+    GithubRepositorySearchResponse sendHttpRequestAndParseResponse(
+            String queryString,
+            LocalDate earliestDate,
+            String programmingLanguage,
+            Integer page) throws IOException, InterruptedException {
 
         HttpRequest request = buildHttpRequest(queryString, earliestDate, programmingLanguage, page);
 
@@ -69,11 +87,11 @@ public class GithubRepositoryResolverImpl implements GithubRepositoryResolver {
                 .build();
     }
 
-     private URI buildRequestURI(
-             @NonNull String queryString,
-             LocalDate earliestDate,
-             String programmingLanguage,
-             Integer page) {
+    private URI buildRequestURI(
+            @NonNull String queryString,
+            LocalDate earliestDate,
+            String programmingLanguage,
+            Integer page) {
 
         String query = "q=" +  queryString;
 
