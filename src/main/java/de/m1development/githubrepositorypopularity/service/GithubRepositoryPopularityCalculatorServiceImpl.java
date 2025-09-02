@@ -1,6 +1,6 @@
 package de.m1development.githubrepositorypopularity.service;
 
-import de.m1development.githubrepositorypopularity.model.GithubRepositoryPopularity;
+import de.m1development.githubrepositorypopularity.model.GithubRepositoryItem;
 import de.m1development.githubrepositorypopularity.util.net.GithubRepositoryResolver;
 import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,12 +31,12 @@ public class GithubRepositoryPopularityCalculatorServiceImpl implements GithubRe
      * @return List of GithubRepositoryPopularity
      */
     @Override
-    public List<GithubRepositoryPopularity> calculatePopularityForRepositories(
+    public List<GithubRepositoryItem> calculatePopularityForRepositories(
             @NonNull String queryString,
             LocalDate earliestDate,
             String programmingLanguage) {
 
-        List<GithubRepositoryPopularity> repositories = githubRepositoryResolver.resolveMatchingGithubRepositories(queryString, earliestDate, programmingLanguage);
+        List<GithubRepositoryItem> repositories = githubRepositoryResolver.resolveMatchingGithubRepositories(queryString, earliestDate, programmingLanguage);
 
         // TODO: Implement popularity score algorithm
 

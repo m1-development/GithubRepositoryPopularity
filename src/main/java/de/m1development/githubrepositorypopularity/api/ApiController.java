@@ -1,6 +1,6 @@
 package de.m1development.githubrepositorypopularity.api;
 
-import de.m1development.githubrepositorypopularity.model.GithubRepositoryPopularity;
+import de.m1development.githubrepositorypopularity.model.GithubRepositoryItem;
 import de.m1development.githubrepositorypopularity.service.GithubRepositoryPopularityCalculatorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -45,7 +45,7 @@ public class ApiController {
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate earliestDate,
             @RequestParam(required = false) String programmingLanguage
     ) {
-        List<GithubRepositoryPopularity> repositories = calculatorService.calculatePopularityForRepositories(queryString, earliestDate, programmingLanguage);
+        List<GithubRepositoryItem> repositories = calculatorService.calculatePopularityForRepositories(queryString, earliestDate, programmingLanguage);
 
         Map<String, Object> response = new HashMap<>();
         response.put("query", queryString);

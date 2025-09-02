@@ -1,6 +1,6 @@
 package de.m1development.githubrepositorypopularity.service;
 
-import de.m1development.githubrepositorypopularity.model.GithubRepositoryPopularity;
+import de.m1development.githubrepositorypopularity.model.GithubRepositoryItem;
 import de.m1development.githubrepositorypopularity.util.net.GithubRepositoryResolver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,11 +32,11 @@ class GithubRepositoryPopularityCalculatorServiceImplTest {
         LocalDate earliestDate = null;
         String programmingLanguage = null;
 
-        List<GithubRepositoryPopularity> testResponse = buildTestResponse();
+        List<GithubRepositoryItem> testResponse = buildTestResponse();
         doReturn(testResponse).when(githubRepositoryResolver).resolveMatchingGithubRepositories(queryString, earliestDate, programmingLanguage);
 
         // when
-        List<GithubRepositoryPopularity> list = sut.calculatePopularityForRepositories(queryString, earliestDate, programmingLanguage);
+        List<GithubRepositoryItem> list = sut.calculatePopularityForRepositories(queryString, earliestDate, programmingLanguage);
 
         // then
         assertNotNull(list);
@@ -50,11 +50,11 @@ class GithubRepositoryPopularityCalculatorServiceImplTest {
         LocalDate earliestDate = LocalDate.of(2025,9,1);
         String programmingLanguage = null;
 
-        List<GithubRepositoryPopularity> testResponse = buildTestResponse();
+        List<GithubRepositoryItem> testResponse = buildTestResponse();
         doReturn(testResponse).when(githubRepositoryResolver).resolveMatchingGithubRepositories(queryString, earliestDate, programmingLanguage);
 
         // when
-        List<GithubRepositoryPopularity> list = sut.calculatePopularityForRepositories(queryString, earliestDate, programmingLanguage);
+        List<GithubRepositoryItem> list = sut.calculatePopularityForRepositories(queryString, earliestDate, programmingLanguage);
 
         // then
         assertNotNull(list);
@@ -68,11 +68,11 @@ class GithubRepositoryPopularityCalculatorServiceImplTest {
         LocalDate earliestDate = null;
         String programmingLanguage = "Java";
 
-        List<GithubRepositoryPopularity> testResponse = buildTestResponse();
+        List<GithubRepositoryItem> testResponse = buildTestResponse();
         doReturn(testResponse).when(githubRepositoryResolver).resolveMatchingGithubRepositories(queryString, earliestDate, programmingLanguage);
 
         // when
-        List<GithubRepositoryPopularity> list = sut.calculatePopularityForRepositories(queryString, earliestDate, programmingLanguage);
+        List<GithubRepositoryItem> list = sut.calculatePopularityForRepositories(queryString, earliestDate, programmingLanguage);
 
         // then
         assertNotNull(list);
@@ -86,19 +86,19 @@ class GithubRepositoryPopularityCalculatorServiceImplTest {
         LocalDate earliestDate = LocalDate.of(2025,9,1);
         String programmingLanguage = "Java";
 
-        List<GithubRepositoryPopularity> testResponse = buildTestResponse();
+        List<GithubRepositoryItem> testResponse = buildTestResponse();
         doReturn(testResponse).when(githubRepositoryResolver).resolveMatchingGithubRepositories(queryString, earliestDate, programmingLanguage);
 
         // when
-        List<GithubRepositoryPopularity> list = sut.calculatePopularityForRepositories(queryString, earliestDate, programmingLanguage);
+        List<GithubRepositoryItem> list = sut.calculatePopularityForRepositories(queryString, earliestDate, programmingLanguage);
 
         // then
         assertNotNull(list);
         assertEquals(1, list.size());
     }
 
-    private List<GithubRepositoryPopularity> buildTestResponse() {
-        GithubRepositoryPopularity test =  new GithubRepositoryPopularity();
+    private List<GithubRepositoryItem> buildTestResponse() {
+        GithubRepositoryItem test =  new GithubRepositoryItem();
         test.setId(1234);
         test.setName("RepoName");
         test.setHtmlUrl("https://github.com/RepoName/example");
