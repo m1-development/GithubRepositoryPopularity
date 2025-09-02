@@ -11,7 +11,6 @@ import java.util.List;
 
 @Service
 public class GithubRepositoryPopularityCalculatorServiceImpl implements GithubRepositoryPopularityCalculatorService {
-
     private final GithubRepositoryResolver githubRepositoryResolver;
 
     @Autowired
@@ -25,9 +24,10 @@ public class GithubRepositoryPopularityCalculatorServiceImpl implements GithubRe
             LocalDate earliestDate,
             String programmingLanguage) {
 
-        List<GithubRepositoryItem> repositories = githubRepositoryResolver.resolveMatchingGithubRepositories(queryString, earliestDate, programmingLanguage);
-
-        // TODO: Implement popularity score algorithm
+        List<GithubRepositoryItem> repositories = githubRepositoryResolver.resolveMatchingGithubRepositories(
+                queryString, earliestDate, programmingLanguage);
+        repositories.forEach(GithubRepositoryItem::calculatePopularityScore);
+        repositories.sort((a, b) -> Double.compare(b.getPopularityScore(), a.getPopularityScore()));
 
         return repositories;
     }

@@ -9,7 +9,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class ApiControllerE2ETest {
@@ -40,7 +40,7 @@ class ApiControllerE2ETest {
                 .log().all()
                 .baseUri("http://localhost")
                 .port(port)
-                .pathParam("queryString", "testvalue")
+                .pathParam("queryString", "test")
                 .queryParam("earliestDate", "2025-08-30")
                 .queryParam("programmingLanguage", "Java")
                 .when()
@@ -49,12 +49,13 @@ class ApiControllerE2ETest {
                 .statusCode(200)
                 .extract().response();
 
-        assertEquals("testvalue", response.jsonPath().getString("query"));
+        assertEquals("test", response.jsonPath().getString("query"));
         assertEquals("2025-08-30", response.jsonPath().getString("earliest_date"));
         assertEquals("Java", response.jsonPath().getString("programming_language"));
 
         List<LinkedHashMap> matchingRepositories = response.jsonPath().getList("matching_repositories");
 
-        assertEquals(0, matchingRepositories.size());
+        assertNotNull(matchingRepositories);
+        assertTrue(matchingRepositories.size() > 1);
     }
 }
