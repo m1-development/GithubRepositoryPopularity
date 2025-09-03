@@ -1,6 +1,8 @@
 package de.m1development.githubrepositorypopularity.api;
 
 import de.m1development.githubrepositorypopularity.model.GithubRepositoryItem;
+import de.m1development.githubrepositorypopularity.model.HttpCalculatePopularityResponse;
+import de.m1development.githubrepositorypopularity.model.HttpHomeResponse;
 import de.m1development.githubrepositorypopularity.service.GithubRepositoryPopularityCalculatorService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,7 +63,7 @@ public class ApiController implements ErrorController {
 
             List<GithubRepositoryItem> repositories = calculatorService.calculatePopularityForRepositories(queryString, parsedEarliestDate, programmingLanguage);
 
-            CalculatePopularityResponse calculatePopularityResponse = CalculatePopularityResponse.builder()
+            HttpCalculatePopularityResponse httpCalculatePopularityResponse = HttpCalculatePopularityResponse.builder()
                     .query(queryString)
                     .earliestDate(parsedEarliestDate)
                     .programmingLanguage(programmingLanguage)
@@ -69,7 +71,7 @@ public class ApiController implements ErrorController {
                     .repositories(repositories)
                     .build();
 
-            return ResponseEntity.ok(calculatePopularityResponse);
+            return ResponseEntity.ok(httpCalculatePopularityResponse);
         } catch (Exception e) {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)

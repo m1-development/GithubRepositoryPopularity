@@ -1,4 +1,4 @@
-package de.m1development.githubrepositorypopularity.api;
+package de.m1development.githubrepositorypopularity.model;
 
 import lombok.Data;
 

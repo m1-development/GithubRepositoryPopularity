@@ -1,6 +1,5 @@
-package de.m1development.githubrepositorypopularity.api;
+package de.m1development.githubrepositorypopularity.model;
 
-import de.m1development.githubrepositorypopularity.model.GithubRepositoryItem;
 import lombok.Builder;
 import lombok.Data;
 
@@ -9,7 +8,7 @@ import java.util.List;
 
 @Data
 @Builder
-public class CalculatePopularityResponse {
+public class HttpCalculatePopularityResponse {
     private String query;
     private LocalDate earliestDate;
     private String programmingLanguage;
