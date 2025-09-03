@@ -2,21 +2,20 @@ package de.m1development.githubrepositorypopularity.api;
 
 import de.m1development.githubrepositorypopularity.model.GithubRepositoryItem;
 import de.m1development.githubrepositorypopularity.service.GithubRepositoryPopularityCalculatorService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.boot.web.servlet.error.ErrorController;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.util.HashMap;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Map;
 
+@Slf4j
 @RestController
-public class ApiController {
+public class ApiController implements ErrorController {
 
     private final GithubRepositoryPopularityCalculatorService calculatorService;
 
@@ -25,33 +24,61 @@ public class ApiController {
         this.calculatorService = calculatorService;
     }
 
+    /**
+     * @return Description of the API and available endpoints
+     *
+     * @status 200
+     */
     @GetMapping("/")
-    public ResponseEntity<String> home() {
-        String response = "Hello World";
-        return ResponseEntity.ok(response);
+    public ResponseEntity<HttpHomeResponse> home() {
+        HttpHomeResponse httpHomeResponse = new HttpHomeResponse();
+        httpHomeResponse.setDescription("Github Repository Popularity Calculator");
+        httpHomeResponse.getEndpoints().put("Home with available endpoints", "GET /");
+        httpHomeResponse.getEndpoints().put("Calculate popularity score for github repositories", "GET /calculatePopularity/{queryString}?earliestDate={earliestDate}&programmingLanguage={programmingLanguage}");
+
+        return ResponseEntity.ok(httpHomeResponse);
     }
 
     /**
      * @param queryString           Best match query string for repositories on github
-     * @param earliestDate          Optional filter to get repositories created on this date
+     * @param earliestDate          Optional filter to get repositories created on this date (format: YYYY-MM-DD)
      * @param programmingLanguage   Optional filter to get repositories using the specified programming language
      *
      * @return                      JSON with all matching repositories and their calculated popularity score
+     *
+     * @status                      200 if successful, 500 if an error occurred
+     *
      */
     @GetMapping("/calculatePopularity/{queryString}")
-    public ResponseEntity<Map<String, Object>> calculatePopularity(
+    public ResponseEntity<Object> calculatePopularity(
             @PathVariable String queryString,
-            @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate earliestDate,
+            @RequestParam(required = false) String earliestDate,
             @RequestParam(required = false) String programmingLanguage
     ) {
-        List<GithubRepositoryItem> repositories = calculatorService.calculatePopularityForRepositories(queryString, earliestDate, programmingLanguage);
+        try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            LocalDate parsedEarliestDate = earliestDate != null ? LocalDate.parse(earliestDate, formatter) : null;
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("query", queryString);
-        response.put("earliest_date", earliestDate);
-        response.put("programming_language", programmingLanguage);
-        response.put("matching_repositories", repositories);
-        return ResponseEntity.ok(response);
+            List<GithubRepositoryItem> repositories = calculatorService.calculatePopularityForRepositories(queryString, parsedEarliestDate, programmingLanguage);
+
+            CalculatePopularityResponse calculatePopularityResponse = CalculatePopularityResponse.builder()
+                    .query(queryString)
+                    .earliestDate(parsedEarliestDate)
+                    .programmingLanguage(programmingLanguage)
+                    .matchingRepositoryCount(repositories.size())
+                    .repositories(repositories)
+                    .build();
+
+            return ResponseEntity.ok(calculatePopularityResponse);
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Internal Server Error: " + e.getMessage());
+        }
+    }
+
+    @RequestMapping(value = "/error")
+    public String error() {
+        return "Internal Server Error";
     }
 }

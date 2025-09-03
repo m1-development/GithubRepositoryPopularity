@@ -27,7 +27,6 @@ public class GithubRepositoryItem {
     @JsonProperty("updated_at")
     private LocalDate updatedAt;
 
-    @JsonIgnore
     private Double popularityScore = 0.0;
 
     @JsonIgnore
