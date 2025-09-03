@@ -31,7 +31,7 @@ class ApiControllerE2ETest {
                 .extract().response();
 
         assertEquals("Github Repository Popularity Calculator", response.jsonPath().getString("description"));
-        assertEquals("[Home with available endpoints:GET /, Calculate popularity score for github repositories:GET /calculatePopularity/{queryString}?earliestDate={date}&programmingLanguage={lang}]", response.jsonPath().getString("endpoints"));
+        assertEquals("[Home with available endpoints:GET /, Calculate popularity score for github repositories:GET /calculatePopularity/{queryString}?earliestDate={earliestDate}&programmingLanguage={programmingLanguage}]", response.jsonPath().getString("endpoints"));
     }
 
     @Test
